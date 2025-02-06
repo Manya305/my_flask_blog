@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Home</h1>
+    {% for post in posts %}
+        <article class="post">
+            <h2><a href="{{ url_for('post', post_id=post.id) }}">{{ post.title }}</a></h2>
+            <p>By {{ post.author.username }} on {{ post.date_posted.strftime('%Y-%m-%d') }}</p>
+            <p>{{ post.content }}</p>
+        </article>
+    {% endfor %}
+{% endblock %}
+
+{% for post in posts.items %}
+    <div class="post">
+        <h2><a href="{{ url_for('post', post_id=post.id) }}">{{ post.title }}</a></h2>
+        <p>By {{ post.author.username }} on {{ post.date_posted.strftime('%Y-%m-%d') }}</p>
+        <p>{{ post.content }}</p>
+    </div>
+{% endfor %}
+
+<!-- Pagination Links -->
+<nav aria-label="Page navigation">
+    <ul class="pagination">
+        {% if posts.has_prev %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('home', page=posts.prev_num) }}">Previous</a></li>
+        {% endif %}
+        {% for page_num in posts.iter_pages() %}
+            <li class="page-item {% if page_num == posts.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('home', page=page_num) }}">{{ page_num }}</a>
+            </li>
+        {% endfor %}
+        {% if posts.has_next %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('home', page=posts.next_num) }}">Next</a></li>
+        {% endif %}
+    </ul>
+</nav>
