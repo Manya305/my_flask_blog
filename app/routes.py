@@ -1,7 +1,7 @@
 from flask import render_template, url_for, flash, redirect, request, abort  # Add abort here
 from app import app, db
-from app.forms import RegistrationForm, LoginForm, PostForm
-from app.models import User, Post
+from app.forms import RegistrationForm, LoginForm, PostForm, CommentForm  # Add CommentForm here
+from app.models import User, Post, Comment, Like  # Add Comment here
 from flask_login import login_user, current_user, logout_user, login_required
 from app import bcrypt
 from flask import request
@@ -59,10 +59,18 @@ def new_post():
         return redirect(url_for('home'))
     return render_template('create_post.html', title='New Post', form=form)
 
-@app.route('/post/<int:post_id>')
+@app.route('/post/<int:post_id>', methods=['GET', 'POST'])
 def post(post_id):
     post = Post.query.get_or_404(post_id)
-    return render_template('post.html', title=post.title, post=post)
+    form = CommentForm()
+    if form.validate_on_submit():
+        comment = Comment(content=form.content.data, user_id=current_user.id, post_id=post.id)
+        db.session.add(comment)
+        db.session.commit()
+        flash('Your comment has been posted!', 'success')
+        return redirect(url_for('post', post_id=post.id))
+    comments = Comment.query.filter_by(post_id=post.id).order_by(Comment.date_posted.desc()).all()
+    return render_template('post.html', post=post, form=form, comments=comments)
 
 @app.route('/post/<int:post_id>/update', methods=['GET', 'POST'])
 @login_required
@@ -105,3 +113,31 @@ def search():
     query = request.args.get('query')
     posts = Post.query.filter(Post.title.contains(query) | Post.content.contains(query)).all()
     return render_template('search.html', posts=posts, query=query)
+
+@app.route('/like/<int:post_id>')
+@login_required
+def like_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    like = Like.query.filter_by(user_id=current_user.id, post_id=post.id).first()
+    if like:
+        flash('You have already liked/disliked this post.', 'warning')
+    else:
+        post.likes += 1
+        like = Like(user_id=current_user.id, post_id=post.id, like_type='like')
+        db.session.add(like)
+        db.session.commit()
+    return redirect(url_for('post', post_id=post.id))
+
+@app.route('/dislike/<int:post_id>')
+@login_required
+def dislike_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    like = Like.query.filter_by(user_id=current_user.id, post_id=post.id).first()
+    if like:
+        flash('You have already liked/disliked this post.', 'warning')
+    else:
+        post.dislikes += 1
+        like = Like(user_id=current_user.id, post_id=post.id, like_type='dislike')
+        db.session.add(like)
+        db.session.commit()
+    return redirect(url_for('post', post_id=post.id))
