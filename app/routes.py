@@ -1,7 +1,7 @@
-from flask import render_template, url_for, flash, redirect, request, abort  # Add abort here
+from flask import render_template, url_for, flash, redirect, request, abort  
 from app import app, db
-from app.forms import RegistrationForm, LoginForm, PostForm, CommentForm  # Add CommentForm here
-from app.models import User, Post, Comment, Like  # Add Comment here
+from app.forms import RegistrationForm, LoginForm, PostForm, CommentForm  
+from app.models import User, Post, Comment, Like  
 from flask_login import login_user, current_user, logout_user, login_required
 from app import bcrypt
 from flask import request
